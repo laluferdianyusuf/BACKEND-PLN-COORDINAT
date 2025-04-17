@@ -11,7 +11,7 @@ const authenticate = async (req, res, next) => {
     token = authHeader.split(" ")[1];
   else
     return res.status(401).send({
-      status_info: false,
+      status: false,
       message: "You have to login first",
       data: null,
     });
@@ -25,7 +25,7 @@ const authenticate = async (req, res, next) => {
     next();
   } catch (err) {
     return res.status(401).send({
-      status_info: false,
+      status: false,
       message: "Please login again",
       data: null,
     });
@@ -42,7 +42,7 @@ const isSupervisor = async (req, res, next) => {
     return next();
   }
   return res.status(401).json({
-    status_info: false,
+    status: false,
     message: "You don't have permission (ADMINISTRATOR)",
     data: null,
   });
