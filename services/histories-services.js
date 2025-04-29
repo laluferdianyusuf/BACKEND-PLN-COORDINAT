@@ -6,6 +6,7 @@ class HistoryService {
     category,
     title = null,
     description = null,
+    type = null,
     value,
     background,
   }) {
@@ -51,6 +52,7 @@ class HistoryService {
         category: category,
         title: title,
         description: description,
+        type: type,
         value: value,
         background: background,
       });

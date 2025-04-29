@@ -33,6 +33,10 @@ module.exports = {
         type: Sequelize.TEXT,
         allowNull: true,
       },
+      type: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
       value: {
         type: Sequelize.JSON,
         allowNull: false,

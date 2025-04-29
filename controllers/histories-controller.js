@@ -2,7 +2,7 @@ const HistoriesService = require("../services/histories-services");
 
 const createHistory = async (req, res) => {
   const { user_id } = req.params;
-  const { category, title, description, value, background } = req.body;
+  const { category, title, description, type, value, background } = req.body;
 
   const { status, status_code, message, data } =
     await HistoriesService.createHistory({
@@ -10,6 +10,7 @@ const createHistory = async (req, res) => {
       category: category,
       title: title,
       description: description,
+      type: type,
       value: value,
       background: background,
     });

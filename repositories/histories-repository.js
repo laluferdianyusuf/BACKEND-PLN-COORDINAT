@@ -6,6 +6,7 @@ class HistoryRepository {
     category,
     title,
     description,
+    type,
     value,
     background,
   }) {
@@ -14,6 +15,7 @@ class HistoryRepository {
       category: category,
       title: title,
       description: description,
+      type: type,
       value: value,
       background: background,
     });
@@ -26,7 +28,7 @@ class HistoryRepository {
       where: {
         id: id,
       },
-      order: [["createdAt", "ASC"]],
+      order: [["createdAt", "DESC"]],
     });
 
     return getHistory;
@@ -37,7 +39,7 @@ class HistoryRepository {
       where: {
         user_id: user_id,
       },
-      order: [["createdAt", "ASC"]],
+      order: [["createdAt", "DESC"]],
     });
 
     return getHistory;
@@ -49,7 +51,7 @@ class HistoryRepository {
         user_id: user_id,
         category: category,
       },
-      order: [["createdAt", "ASC"]],
+      order: [["createdAt", "DESC"]],
     });
 
     return getHistory;
@@ -60,7 +62,7 @@ class HistoryRepository {
       where: {
         id: id,
       },
-      order: [["createdAt", "ASC"]],
+      order: [["createdAt", "DESC"]],
     });
 
     return getHistory;

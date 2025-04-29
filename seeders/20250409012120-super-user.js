@@ -7,6 +7,7 @@ const { v4: uuidv4 } = require("uuid");
 module.exports = {
   async up(queryInterface, Sequelize) {
     const hashedPassword = await bcrypt.hash("supervisor", JWT.SALT_ROUND);
+    const guestPassword = await bcrypt.hash("guest", JWT.SALT_ROUND);
 
     await queryInterface.bulkInsert("users", [
       {
@@ -17,6 +18,17 @@ module.exports = {
         address: "Mataram",
         password: hashedPassword,
         role: "supervisor",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        userId: uuidv4(),
+        name: "Guest",
+        username: "guest",
+        email: "guest@gmail.com",
+        address: "Mataram",
+        password: guestPassword,
+        role: "guest",
         createdAt: new Date(),
         updatedAt: new Date(),
       },
