@@ -21,7 +21,8 @@ module.exports = {
           "fuse_link",
           "fuse_link_branch",
           "nh_fuse_substation",
-          "balancer"
+          "lwbp",
+          "wbp"
         ),
         allowNull: false,
       },
