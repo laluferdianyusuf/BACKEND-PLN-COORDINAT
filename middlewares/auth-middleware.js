@@ -3,47 +3,51 @@ const { JWT, ROLES } = require("../lib/constant");
 const UserRepository = require("../repositories/users-repository");
 
 const authenticate = async (req, res, next) => {
-  const authHeader = req.get("Authorization");
-
-  let token = "";
-
-  if (authHeader && authHeader.startsWith("Bearer"))
-    token = authHeader.split(" ")[1];
-  else
-    return res.status(401).send({
-      status: false,
-      message: "You have to login first",
-      data: null,
-    });
-
   try {
-    const { email } = jwt.verify(token, JWT.SECRET);
+    const authHeader = req.headers.authorization;
 
-    const getUsers = await UserRepository.findUserByEmail({ email });
-    req.users = getUsers;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        status: false,
+        message: "Unauthorized: Token not provided",
+        data: null,
+      });
+    }
 
+    const token = authHeader.split(" ")[1];
+
+    const decoded = jwt.verify(token, JWT.SECRET);
+    const user = await UserRepository.findUserByEmail({ email: decoded.email });
+
+    if (!user) {
+      return res.status(401).json({
+        status: false,
+        message: "Unauthorized: User not found",
+        data: null,
+      });
+    }
+
+    req.users = user;
     next();
   } catch (err) {
-    return res.status(401).send({
+    return res.status(401).json({
       status: false,
-      message: "Please login again",
+      message: "Unauthorized: Invalid or expired token",
       data: null,
     });
   }
 };
 
-const isSupervisor = async (req, res, next) => {
+const isSupervisor = (req, res, next) => {
   const user = req.users;
 
-  if (
-    (user && user.role === ROLES.SUPERVISOR) ||
-    (user && user.role === ROLES.ADMIN)
-  ) {
+  if ([ROLES.SUPERVISOR, ROLES.ADMIN].includes(user?.role)) {
     return next();
   }
-  return res.status(401).json({
+
+  return res.status(403).json({
     status: false,
-    message: "You don't have permission (ADMINISTRATOR)",
+    message: "Forbidden: You don't have supervisor privileges",
     data: null,
   });
 };
