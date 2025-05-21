@@ -1,39 +1,39 @@
 const { users } = require("../models");
+
 class UserRepository {
-  static async register({
-    userId,
-    name,
-    username,
-    email,
-    address,
-    password,
-    role,
-  }) {
-    const registerUser = await users.create({
-      userId: userId,
-      name: name,
-      username: username,
-      email: email,
-      address: address,
-      password: password,
-      role: role,
-    });
-    return registerUser;
+  static async register(
+    { userId, name, username, email, address, password, role },
+    transaction
+  ) {
+    return await users.create(
+      {
+        userId,
+        name,
+        username,
+        email,
+        address,
+        password,
+        role,
+      },
+      { transaction }
+    );
   }
 
   static async findUserById({ userId }) {
-    const findUser = await users.findOne({ where: { userId: userId } });
-    return findUser;
+    return await users.findOne({ where: { userId } });
   }
 
   static async findUserByEmail({ email }) {
-    const findUser = await users.findOne({ where: { email } });
-    return findUser;
+    return await users.findOne({ where: { email } });
   }
 
   static async getUserByUsername({ username }) {
-    const getUser = await users.findOne({ where: { username } });
-    return getUser;
+    return await users.findOne({ where: { username } });
+  }
+
+  static async changePassword({ userId, password }, transaction) {
+    await users.update({ password }, { where: { userId }, transaction });
+    return await users.findOne({ where: { userId } });
   }
 }
 

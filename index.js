@@ -30,6 +30,11 @@ app.get(
   middlewares.authenticate,
   UserController.currentUser
 );
+app.put(
+  "/api/v1/change/password/:id",
+  middlewares.authenticate,
+  UserController.changePassword
+);
 
 // category
 app.post(

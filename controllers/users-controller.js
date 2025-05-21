@@ -19,11 +19,12 @@ const register = async (req, res) => {
 };
 
 const login = async (req, res, next) => {
-  const { username, password } = req.body;
+  const { username, password, role } = req.body;
 
   const { status, status_code, message, data } = await UserService.login({
     username: username,
     password: password,
+    role: role,
   });
 
   res.status(status_code).send({
@@ -44,8 +45,29 @@ const currentUser = async (req, res) => {
   });
 };
 
+const changePassword = async (req, res) => {
+  const { id } = req.params;
+  const { currentPassword, password, reTypePassword } = req.body;
+
+  const { status, status_code, message, data } =
+    await UserService.changePassword({
+      userId: id,
+      currentPassword: currentPassword,
+      password: password,
+      reTypePassword: reTypePassword,
+    });
+
+  res.status(status_code).send({
+    status: status,
+    status_code: status_code,
+    message: message,
+    data: data,
+  });
+};
+
 module.exports = {
   register,
   login,
   currentUser,
+  changePassword,
 };

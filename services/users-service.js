@@ -3,50 +3,37 @@ const bcrypt = require("bcrypt");
 const { JWT, ROLES } = require("../lib/constant");
 const jwt = require("jsonwebtoken");
 const { v4: uuidv4 } = require("uuid");
+const { sequelize } = require("../models");
 
 class UserService {
+  static validateFields(fields) {
+    for (const [key, value] of Object.entries(fields)) {
+      if (!value) {
+        return `${key.charAt(0).toUpperCase() + key.slice(1)} is required`;
+      }
+    }
+    return null;
+  }
+
   static async register({ name, username, email, address, password }) {
+    const transaction = await sequelize.transaction();
     try {
-      if (!name) {
+      const error = this.validateFields({
+        name: name,
+        username: username,
+        email: email,
+        address: address,
+        password: password,
+      });
+      if (error) {
         return {
           status: false,
           status_code: 400,
-          message: "Name is required",
+          message: error,
           data: { user: null },
         };
       }
-      if (!username) {
-        return {
-          status: false,
-          status_code: 400,
-          message: "Username is required",
-          data: { user: null },
-        };
-      }
-      if (!email) {
-        return {
-          status: false,
-          status_code: 400,
-          message: "Email is required",
-          data: { user: null },
-        };
-      }
-      if (!address) {
-        return {
-          status: false,
-          status_code: 400,
-          message: "Address is required",
-          data: { user: null },
-        };
-      }
-      if (!password) {
-        return {
-          status: false,
-          status_code: 400,
-          message: "Password is required",
-          data: { user: null },
-        };
-      } else if (password.length < 8) {
+      if (password.length < 8) {
         return {
           status: false,
           status_code: 400,
@@ -55,17 +42,32 @@ class UserService {
         };
       }
 
-      const findEmail = await UserRepository.findUserByEmail({ email: email });
-      if (findEmail) {
+      const [existingEmail, existingUsername] = await Promise.all([
+        UserRepository.findUserByEmail({ email }),
+        UserRepository.getUserByUsername({ username }),
+      ]);
+
+      if (existingEmail) {
         return {
           status: false,
           status_code: 400,
-          message: "Email address has already been registered",
+          message: "Email address is already registered",
           data: { user: null },
         };
-      } else {
-        const hashedPassword = await bcrypt.hash(password, JWT.SALT_ROUND);
-        const registeredUser = await UserRepository.register({
+      }
+
+      if (existingUsername) {
+        return {
+          status: false,
+          status_code: 400,
+          message: "Username is already taken",
+          data: { user: null },
+        };
+      }
+
+      const hashedPassword = await bcrypt.hash(password, JWT.SALT_ROUND);
+      const registeredUser = await UserRepository.register(
+        {
           userId: uuidv4(),
           name: name,
           username: username,
@@ -73,15 +75,20 @@ class UserService {
           address: address,
           password: hashedPassword,
           role: ROLES.USER,
-        });
-        return {
-          status: true,
-          status_code: 201,
-          message: "User successfully registered",
-          data: { user: registeredUser },
-        };
-      }
+        },
+        transaction
+      );
+
+      await transaction.commit();
+
+      return {
+        status: true,
+        status_code: 201,
+        message: "User successfully registered",
+        data: { user: registeredUser },
+      };
     } catch (error) {
+      await transaction.rollback();
       return {
         status: false,
         status_code: 500,
@@ -91,30 +98,27 @@ class UserService {
     }
   }
 
-  static async login({ username, password }) {
+  static async login({ username, password, role }) {
     try {
-      if (!username) {
+      const error = this.validateFields({
+        username: username,
+        password: password,
+        role: role,
+      });
+      if (error) {
         return {
           status: false,
           status_code: 400,
-          message: "Username are required",
-          data: { user: null, token: null },
-        };
-      }
-      if (!password) {
-        return {
-          status: false,
-          status_code: 400,
-          message: "Password are required",
+          message: error,
           data: { user: null, token: null },
         };
       }
 
-      const getUser = await UserRepository.getUserByUsername({
+      const user = await UserRepository.getUserByUsername({
         username: username,
       });
 
-      if (!getUser) {
+      if (!user) {
         return {
           status: false,
           status_code: 403,
@@ -123,7 +127,16 @@ class UserService {
         };
       }
 
-      const isPasswordValid = await bcrypt.compare(password, getUser.password);
+      if (user.role !== role) {
+        return {
+          status: false,
+          status_code: 403,
+          message: `Logged in as '${user.role}', expected '${role}'`,
+          data: { user: null, token: null },
+        };
+      }
+
+      const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
         return {
           status: false,
@@ -135,25 +148,129 @@ class UserService {
 
       const token = await jwt.sign(
         {
-          userId: getUser.userId,
-          name: getUser.name,
-          username: getUser.username,
-          email: getUser.email,
+          userId: user.userId,
+          name: user.name,
+          username: user.username,
+          email: user.email,
         },
-        JWT.SECRET
+        JWT.SECRET,
+        { expiresIn: JWT.EXPIRED }
       );
 
       return {
         status: true,
         status_code: 200,
         message: "Successfully signed",
-        data: { user: getUser, token: token },
+        data: { user: user, token: token },
       };
     } catch (error) {
       return {
         status: false,
         status_code: 500,
         message: error.message,
+        data: { user: null, token: null },
+      };
+    }
+  }
+
+  static async changePassword({
+    userId,
+    currentPassword,
+    password,
+    reTypePassword,
+  }) {
+    const transaction = await sequelize.transaction();
+    try {
+      const error = this.validateFields({
+        userId,
+        currentPassword,
+        password,
+        reTypePassword,
+      });
+      if (error) {
+        return {
+          status: false,
+          status_code: 400,
+          message: error,
+          data: { user: null, token: null },
+        };
+      }
+
+      if (password.length < 8) {
+        return {
+          status: false,
+          status_code: 400,
+          message: "New password must be at least 8 characters",
+          data: { user: null, token: null },
+        };
+      }
+
+      if (password !== reTypePassword) {
+        return {
+          status: false,
+          status_code: 400,
+          message: "New password and confirmation do not match",
+          data: { user: null, token: null },
+        };
+      }
+
+      const user = await UserRepository.findUserById({ userId: userId });
+      if (!user) {
+        return {
+          status: false,
+          status_code: 404,
+          message: `User not found`,
+          data: { user: null, token: null },
+        };
+      }
+
+      const isOldPasswordValid = await bcrypt.compare(
+        currentPassword,
+        user.password
+      );
+      if (!isOldPasswordValid) {
+        return {
+          status: false,
+          status_code: 403,
+          message: "Current password is incorrect",
+          data: { user: null, token: null },
+        };
+      }
+
+      const hashedPassword = await bcrypt.hash(password, JWT.SALT_ROUND);
+      const updatedUser = await UserRepository.changePassword(
+        {
+          userId: userId,
+          password: hashedPassword,
+        },
+        transaction
+      );
+
+      await transaction.commit();
+
+      const token = await jwt.sign(
+        {
+          userId: updatedUser.userId,
+          name: updatedUser.name,
+          username: updatedUser.username,
+          email: updatedUser.email,
+        },
+        JWT.SECRET,
+        { expiresIn: JWT.EXPIRED }
+      );
+
+      return {
+        status: true,
+        status_code: 200,
+        message: "Password changed successfully",
+        data: { user: updatedUser, token: token },
+      };
+    } catch (error) {
+      await transaction.rollback();
+      return {
+        status: false,
+        status_code: 500,
+        message: "Server Error" + error,
         data: { user: null, token: null },
       };
     }
