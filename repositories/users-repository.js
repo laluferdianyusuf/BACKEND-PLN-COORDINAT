@@ -1,3 +1,4 @@
+const { Op } = require("sequelize");
 const { users } = require("../models");
 
 class UserRepository {
@@ -33,7 +34,29 @@ class UserRepository {
 
   static async changePassword({ userId, password }, transaction) {
     await users.update({ password }, { where: { userId }, transaction });
-    return await users.findOne({ where: { userId } });
+    return await users.findOne({
+      where: { userId },
+      attributes: { exclude: ["password"] },
+    });
+  }
+
+  static async updateUrl({ userId, url }, transaction) {
+    await users.update({ url }, { where: { userId }, transaction });
+    return await users.findOne({
+      where: { userId },
+      attributes: { exclude: ["password"] },
+    });
+  }
+
+  static async getAllUsers() {
+    return await users.findAll({
+      attributes: ["id", "name", "url"],
+      // where: {
+      //   role: {
+      //     [Op.ne]: "guest",
+      //   },
+      // },
+    });
   }
 }
 

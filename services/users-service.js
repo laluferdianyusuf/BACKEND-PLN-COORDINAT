@@ -275,6 +275,80 @@ class UserService {
       };
     }
   }
+
+  static async updateUrl({ id, url }) {
+    const transaction = await sequelize.transaction();
+    try {
+      const error = this.validateFields({
+        id,
+        url,
+      });
+
+      if (error) {
+        return {
+          status: false,
+          status_code: 400,
+          message: error,
+          data: { user: null },
+        };
+      }
+
+      const user = await UserRepository.findUserById({ userId: id });
+      if (!user) {
+        return {
+          status: false,
+          status_code: 404,
+          message: `User not found`,
+          data: { user: null },
+        };
+      }
+
+      const updateUrl = await UserRepository.updateUrl(
+        {
+          userId: id,
+          url: url,
+        },
+        transaction
+      );
+
+      await transaction.commit();
+
+      return {
+        status: true,
+        status_code: 200,
+        message: "Password changed successfully",
+        data: { user: updateUrl },
+      };
+    } catch (error) {
+      await transaction.rollback();
+      return {
+        status: false,
+        status_code: 500,
+        message: "Server Error" + error,
+        data: { user: null },
+      };
+    }
+  }
+
+  static async getAllUsers() {
+    try {
+      const users = await UserRepository.getAllUsers();
+
+      return {
+        status: true,
+        status_code: 200,
+        message: "Users retrieved",
+        data: users,
+      };
+    } catch (error) {
+      return {
+        status: false,
+        status_code: 500,
+        message: "Server Error" + error,
+        data: { user: [] },
+      };
+    }
+  }
 }
 
 module.exports = UserService;

@@ -65,9 +65,40 @@ const changePassword = async (req, res) => {
   });
 };
 
+const updateUrl = async (req, res) => {
+  const { id } = req.params;
+  const { url } = req.body;
+
+  const { status, status_code, message, data } = await UserService.updateUrl({
+    id: id,
+    url: url,
+  });
+
+  res.status(status_code).send({
+    status: status,
+    status_code: status_code,
+    message: message,
+    data: data,
+  });
+};
+
+const getAllUsers = async (req, res) => {
+  const { status, status_code, message, data } =
+    await UserService.getAllUsers();
+
+  res.status(status_code).send({
+    status: status,
+    status_code: status_code,
+    message: message,
+    data: data,
+  });
+};
+
 module.exports = {
   register,
   login,
   currentUser,
   changePassword,
+  updateUrl,
+  getAllUsers,
 };

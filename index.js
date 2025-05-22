@@ -35,6 +35,12 @@ app.put(
   middlewares.authenticate,
   UserController.changePassword
 );
+app.put(
+  "/api/v1/update/url/:id",
+  middlewares.authenticate,
+  UserController.updateUrl
+);
+app.get("/api/v1/users", middlewares.authenticate, UserController.getAllUsers);
 
 // category
 app.post(
