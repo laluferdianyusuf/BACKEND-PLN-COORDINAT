@@ -23,7 +23,9 @@ class UserRepository {
   static async findUserById({ userId }) {
     return await users.findOne({ where: { userId } });
   }
-
+  static async findUserNameById({ userId }) {
+    return await users.findOne({ where: { userId }, attributes: ["name"] });
+  }
   static async findUserByEmail({ email }) {
     return await users.findOne({ where: { email } });
   }
@@ -50,7 +52,7 @@ class UserRepository {
 
   static async getAllUsers() {
     return await users.findAll({
-      attributes: ["id", "name", "url"],
+      attributes: ["id", "userId", "role", "name", "url"],
       // where: {
       //   role: {
       //     [Op.ne]: "guest",

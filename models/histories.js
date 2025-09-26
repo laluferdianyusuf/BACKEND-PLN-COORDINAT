@@ -24,7 +24,11 @@ module.exports = (sequelize, DataTypes) => {
           "fuse_link",
           "fuse_link_branch",
           "nh_fuse_substation",
-          "balancer"
+          "lwbp",
+          "wbp",
+          "saifi",
+          "saidi",
+          "ens"
         ),
         allowNull: false,
       },

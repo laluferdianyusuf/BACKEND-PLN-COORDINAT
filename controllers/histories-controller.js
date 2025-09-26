@@ -37,6 +37,17 @@ const getHistoryByUserId = async (req, res) => {
   });
 };
 
+const getAllHistories = async (req, res) => {
+  const { status, status_code, message, data } =
+    await HistoriesService.getAllHistories();
+
+  res.status(status_code).send({
+    status: status,
+    message: message,
+    data: data,
+  });
+};
+
 const getHistoryByCategory = async (req, res) => {
   const { user_id } = req.params;
   const { category } = req.query;
@@ -90,4 +101,5 @@ module.exports = {
   getHistoryByCategory: getHistoryByCategory,
   deleteHistoryById: deleteHistoryById,
   getHistoryByHistoryId: getHistoryByHistoryId,
+  getAllHistories: getAllHistories,
 };

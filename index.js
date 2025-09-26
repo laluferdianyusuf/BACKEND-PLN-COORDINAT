@@ -42,7 +42,7 @@ app.put(
 );
 app.get("/api/v1/users", middlewares.authenticate, UserController.getAllUsers);
 
-// category
+// histories
 app.post(
   "/api/v2/generate/history/:user_id",
   middlewares.authenticate,
@@ -52,6 +52,11 @@ app.get(
   "/api/v2/retrieve/:user_id",
   middlewares.authenticate,
   HistoryController.getHistoryByUserId
+);
+app.get(
+  "/api/v2/retrieve/histories",
+  middlewares.authenticate,
+  HistoryController.getAllHistories
 );
 app.get(
   "/api/v2/retrieve/category/:user_id",

@@ -22,7 +22,10 @@ module.exports = {
           "fuse_link_branch",
           "nh_fuse_substation",
           "lwbp",
-          "wbp"
+          "wbp",
+          "saidi",
+          "saifi",
+          "ens"
         ),
         allowNull: false,
       },

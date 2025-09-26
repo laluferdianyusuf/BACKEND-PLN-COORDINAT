@@ -45,6 +45,11 @@ class HistoryRepository {
     return getHistory;
   }
 
+  static async getAllHistories() {
+    const getHistories = await histories.findAll();
+    return getHistories;
+  }
+
   static async getHistoryByCategory({ user_id, category }) {
     const getHistory = await histories.findAll({
       where: {
